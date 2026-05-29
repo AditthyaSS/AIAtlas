@@ -1,9 +1,10 @@
 "use client";
 
+import { CommandPalette } from "@/components/search/CommandPalette";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
@@ -20,6 +21,21 @@ export function Navbar() {
     const { data: session, status } = useSession();
     const [mobileOpen, setMobileOpen] = useState(false);
     const { theme, toggle } = useTheme();
+    
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+    // Global ⌘K / Ctrl+K listener
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+                e.preventDefault(); 
+                setIsSearchOpen((prev) => !prev);
+            }
+        };
+        
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
 
     return (
         <header className="sticky top-0 z-50 w-full glass border-b border-atlas-border">
@@ -56,10 +72,11 @@ export function Navbar() {
                         })}
                     </nav>
 
-                    {/* Right side actions */}
                     <div className="flex items-center gap-3">
-                        {/* Search trigger */}
-                        <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm text-atlas-text-muted bg-atlas-bg-secondary border border-atlas-border rounded-md hover:border-atlas-border-hover transition-colors">
+                        <button 
+                            onClick={() => setIsSearchOpen(true)}
+                            className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm text-atlas-text-muted bg-atlas-bg-secondary border border-atlas-border rounded-md hover:border-atlas-border-hover transition-colors"
+                        >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="14"
@@ -244,6 +261,11 @@ export function Navbar() {
                     </div>
                 )}
             </div>
+
+            <CommandPalette 
+                isOpen={isSearchOpen} 
+                onClose={() => setIsSearchOpen(false)} 
+            />
         </header>
     );
 }
