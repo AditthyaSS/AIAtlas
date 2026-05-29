@@ -42,7 +42,7 @@ export function FeedTicker({ events }: FeedTickerProps) {
                                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-atlas-green" />
                             </span>
 
-                            <span className="font-mono text-xs text-atlas-text-muted">
+                            <span suppressHydrationWarning className="font-mono text-xs text-atlas-text-muted">
                                 {timeAgo(event.createdAt)}
                             </span>
 
