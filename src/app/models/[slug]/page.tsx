@@ -1,18 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { getModelBySlug } from "@/lib/mock-data";
 import { formatPrice, formatContextWindow, formatBenchmark, getBenchmarkColor, cn } from "@/lib/utils";
 import { ReviewSection } from "@/components/models/ReviewSection";
+import { ModelDetailSkeleton } from "@/components/ui/Skeletons";
+import { Model } from "@/types";
 
 export default function ModelDetailPage() {
     const params = useParams();
     const slug = params.slug as string;
-    const model = getModelBySlug(slug);
+    const [model, setModel] = useState<Model | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [notFound, setNotFound] = useState(false);
 
-    if (!model) {
+    useEffect(() => {
+        const controller = new AbortController();
+
+        setIsLoading(true);
+        setNotFound(false);
+
+        fetch(`/api/models/${encodeURIComponent(slug)}`, { signal: controller.signal })
+            .then((res) => {
+                if (res.status === 404) {
+                    setNotFound(true);
+                    return null;
+                }
+                return res.json();
+            })
+            .then((json) => {
+                if (json?.data) {
+                    setModel(json.data as Model);
+                }
+            })
+            .catch((err) => {
+                if ((err as Error).name === "AbortError") return;
+            })
+            .finally(() => setIsLoading(false));
+
+        return () => controller.abort();
+    }, [slug]);
+
+    if (isLoading) {
+        return <ModelDetailSkeleton />;
+    }
+
+    if (!model || notFound) {
         return (
             <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
                 <h1 className="text-2xl font-bold text-atlas-text-primary mb-2">Model not found</h1>

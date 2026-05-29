@@ -72,8 +72,8 @@ const config: Config = {
                     "50%": { opacity: "0.4" },
                 },
                 "feed-slide": {
-                    "0%": { transform: "translateX(100%)" },
-                    "100%": { transform: "translateX(-100%)" },
+                    "0%": { transform: "translateX(0)" },
+                    "100%": { transform: "translateX(-50%)" },
                 },
                 "fade-in": {
                     "0%": { opacity: "0", transform: "translateY(8px)" },

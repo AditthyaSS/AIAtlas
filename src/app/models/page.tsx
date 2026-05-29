@@ -1,18 +1,39 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { mockModels, getUniqueProviders, getUniqueModalities, getUniqueLicenses } from "@/lib/mock-data";
-import { ModelFilters as ModelFiltersType } from "@/types";
+import { ModelFilters as ModelFiltersType, Model } from "@/types";
 import { ModelTable } from "@/components/models/ModelTable";
 import { ModelCard } from "@/components/models/ModelCard";
 import { ModelFilters } from "@/components/models/ModelFilters";
+import { ModelTableSkeleton, ModelCardSkeleton } from "@/components/ui/Skeletons";
 
 export default function ModelsPage() {
     const [filters, setFilters] = useState<ModelFiltersType>({});
     const [view, setView] = useState<"table" | "cards">("table");
+    const [models, setModels] = useState<Model[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        fetch("/api/models?limit=100", { signal: controller.signal })
+            .then((res) => res.json())
+            .then((json) => {
+                if (Array.isArray(json.data)) {
+                    setModels(json.data as Model[]);
+                }
+            })
+            .catch(() => {
+                setModels(mockModels);
+            })
+            .finally(() => setIsLoading(false));
+
+        return () => controller.abort();
+    }, []);
 
     const filteredModels = useMemo(() => {
-        let result = [...mockModels];
+        let result = [...models];
 
         if (filters.search) {
             const q = filters.search.toLowerCase();
@@ -37,7 +58,7 @@ export default function ModelsPage() {
         }
 
         return result;
-    }, [filters]);
+    }, [filters, models]);
 
     return (
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -101,7 +122,15 @@ export default function ModelsPage() {
                 </p>
             </div>
 
-            {view === "table" ? (
+            {isLoading ? (
+                view === "table" ? (
+                    <ModelTableSkeleton />
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <ModelCardSkeleton count={8} />
+                    </div>
+                )
+            ) : view === "table" ? (
                 <ModelTable models={filteredModels} />
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -111,7 +140,7 @@ export default function ModelsPage() {
                 </div>
             )}
 
-            {filteredModels.length === 0 && (
+            {!isLoading && filteredModels.length === 0 && (
                 <div className="text-center py-16">
                     <p className="text-atlas-text-muted text-sm">
                         No models match your filters.
