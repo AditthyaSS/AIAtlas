@@ -1,9 +1,9 @@
 "use client";
 
 import { useLiveFeed } from "@/hooks/useLiveFeed";
-import { mockFeedEvents } from "@/lib/mock-data";
 import { timeAgo } from "@/lib/utils";
 import { FeedEvent } from "@/types";
+import { FeedItemSkeleton } from "@/components/ui/Skeletons";
 
 const eventTypeConfig: Record<string, { icon: string; color: string; label: string }> = {
     model_added: { icon: "✦", color: "text-atlas-green", label: "Model Added" },
@@ -13,8 +13,7 @@ const eventTypeConfig: Record<string, { icon: string; color: string; label: stri
 };
 
 export default function FeedPage() {
-    // Start with mock events; hook will replace with live data once loaded
-    const events = useLiveFeed(mockFeedEvents);
+    const { events, isLoading } = useLiveFeed();
 
     return (
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -40,17 +39,21 @@ export default function FeedPage() {
 
             {/* Feed Items */}
             <div className="space-y-2 max-w-3xl">
-                {events.map((event) => (
-                    <FeedItem key={event.id} event={event} />
-                ))}
+                {isLoading ? (
+                    <FeedItemSkeleton count={4} />
+                ) : (
+                    events.map((event) => (
+                        <FeedItem key={event.id} event={event} />
+                    ))
+                )}
 
-                {events.length === 0 && (
+                {!isLoading && events.length === 0 && (
                     <div className="text-center py-16">
                         <p className="text-atlas-text-muted text-sm">No activity yet.</p>
                     </div>
                 )}
 
-                {events.length > 0 && (
+                {!isLoading && events.length > 0 && (
                     <div className="text-center py-8">
                         <p className="text-xs text-atlas-text-muted font-mono">
                             — {events.length} events shown —

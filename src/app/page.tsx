@@ -1,21 +1,42 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { mockModels, mockFeedEvents, getUniqueProviders, getUniqueModalities, getUniqueLicenses } from "@/lib/mock-data";
-import { ModelFilters as ModelFiltersType } from "@/types";
+import { ModelFilters as ModelFiltersType, Model } from "@/types";
 import { ModelTable } from "@/components/models/ModelTable";
 import { ModelCard } from "@/components/models/ModelCard";
 import { ModelFilters } from "@/components/models/ModelFilters";
 import { FeedTicker } from "@/components/feed/FeedTicker";
 import { useLiveFeed } from "@/hooks/useLiveFeed";
+import { ModelTableSkeleton, ModelCardSkeleton } from "@/components/ui/Skeletons";
 
 export default function HomePage() {
     const [filters, setFilters] = useState<ModelFiltersType>({});
     const [view, setView] = useState<"table" | "cards">("table");
-    const feedEvents = useLiveFeed(mockFeedEvents);
+    const [models, setModels] = useState<Model[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { events: feedEvents } = useLiveFeed(mockFeedEvents);
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        fetch("/api/models?limit=100", { signal: controller.signal })
+            .then((res) => res.json())
+            .then((json) => {
+                if (Array.isArray(json.data)) {
+                    setModels(json.data as Model[]);
+                }
+            })
+            .catch(() => {
+                setModels(mockModels);
+            })
+            .finally(() => setIsLoading(false));
+
+        return () => controller.abort();
+    }, []);
 
     const filteredModels = useMemo(() => {
-        let result = [...mockModels];
+        let result = [...models];
 
         if (filters.search) {
             const q = filters.search.toLowerCase();
@@ -40,7 +61,7 @@ export default function HomePage() {
         }
 
         return result;
-    }, [filters]);
+    }, [filters, models]);
 
     return (
         <div className="min-h-screen">
@@ -138,7 +159,15 @@ export default function HomePage() {
                 </div>
 
                 {/* Table or Card View */}
-                {view === "table" ? (
+                {isLoading ? (
+                    view === "table" ? (
+                        <ModelTableSkeleton />
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            <ModelCardSkeleton count={8} />
+                        </div>
+                    )
+                ) : view === "table" ? (
                     <ModelTable models={filteredModels} />
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -148,7 +177,7 @@ export default function HomePage() {
                     </div>
                 )}
 
-                {filteredModels.length === 0 && (
+                {!isLoading && filteredModels.length === 0 && (
                     <div className="text-center py-16">
                         <p className="text-atlas-text-muted text-sm">
                             No models match your filters. Try adjusting your search.
