@@ -129,26 +129,48 @@ export function Navbar() {
                         {status === "loading" ? (
                             <div className="w-8 h-8 rounded-full bg-atlas-bg-tertiary animate-pulse" />
                         ) : session?.user ? (
-                            <div className="flex items-center gap-2">
-                                {/* Avatar */}
-                                {session.user.image ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                        src={session.user.image}
-                                        alt={session.user.name ?? "User"}
-                                        className="w-8 h-8 rounded-full border border-atlas-border"
-                                    />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-atlas-bg-tertiary border border-atlas-border flex items-center justify-center text-xs font-mono text-atlas-text-secondary">
-                                        {session.user.name?.[0]?.toUpperCase() ?? "U"}
-                                    </div>
-                                )}
-                                <button
-                                    onClick={() => signOut({ callbackUrl: "/" })}
-                                    className="hidden sm:inline-flex text-xs text-atlas-text-muted hover:text-atlas-text-secondary transition-colors"
-                                >
-                                    Sign out
+                            <div className="relative group flex items-center gap-2">
+                                {/* Avatar acts as Dropdown Trigger */}
+                                <button className="focus:outline-none ring-2 ring-transparent hover:ring-atlas-border rounded-full transition-all">
+                                    {session.user.image ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={session.user.image}
+                                            alt={session.user.name ?? "User"}
+                                            className="w-8 h-8 rounded-full border border-atlas-border object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-atlas-bg-tertiary border border-atlas-border flex items-center justify-center text-xs font-mono text-atlas-text-secondary">
+                                            {session.user.name?.[0]?.toUpperCase() ?? "U"}
+                                        </div>
+                                    )}
                                 </button>
+                                
+                                {/* Dropdown Menu (Hover to open) */}
+                                <div className="absolute right-0 top-[120%] w-48 bg-atlas-bg-secondary border border-atlas-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden flex flex-col">
+                                    <div className="px-4 py-3 border-b border-atlas-border/50">
+                                        <p className="text-xs text-atlas-text-muted">Signed in as</p>
+                                        <p className="text-sm font-medium text-atlas-text-primary truncate">
+                                            {session.user.name} 
+                                        </p>
+                                    </div>
+                                    
+                                    <Link 
+                                        href={`/u/${(session.user as any).githubUsername || 'developer'}`} 
+                                        className="px-4 py-2.5 text-sm text-atlas-text-secondary hover:text-atlas-text-primary hover:bg-atlas-bg-tertiary transition-colors flex items-center gap-2"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        My Profile
+                                    </Link>
+                                    
+                                    <button
+                                        onClick={() => signOut({ callbackUrl: "/" })}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 transition-colors flex items-center gap-2 border-t border-atlas-border/50"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                                        Sign out
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <button
