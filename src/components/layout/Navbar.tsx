@@ -11,6 +11,7 @@ import { useTheme } from "@/components/providers/ThemeProvider";
 const navLinks = [
     { href: "/", label: "Leaderboard" },
     { href: "/models", label: "Models" },
+    { href: "/models/compare", label: "Compare" },
     { href: "/tools", label: "Tools" },
     { href: "/repos", label: "Repos" },
     { href: "/feed", label: "Feed" },
