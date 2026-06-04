@@ -27,6 +27,11 @@ export async function GET(
             return NextResponse.json({ error: "Model not found" }, { status: 404 });
         }
 
+        // Prevent returning unverified models to the public API
+        if (!model.isVerified) {
+            return NextResponse.json({ error: "Model not found" }, { status: 404 });
+        }
+
         return NextResponse.json({ data: model });
     } catch (err) {
         console.error("GET /api/models/[slug] error:", err);

@@ -43,9 +43,7 @@ export async function GET(request: Request) {
         "inputPricePerMtok", "outputPricePerMtok", "speedToksPerSec", "createdAt",
     ];
     const rawSort = searchParams.get("sort") ?? "";
-    const sort = allowedSorts.includes(rawSort) ? rawSort : "benchmarkGpqa";
-    const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const sortValidated = allowedSorts.includes(rawSort) ? rawSort : "benchmarkGpqa";
 
     if (!DB_ENABLED) {
         // Fallback: filter mock data
@@ -63,8 +61,8 @@ export async function GET(request: Request) {
             );
         }
         result.sort((a, b) => {
-            const aVal = (a as unknown as Record<string, unknown>)[sort];
-            const bVal = (b as unknown as Record<string, unknown>)[sort];
+            const aVal = (a as unknown as Record<string, unknown>)[sortValidated];
+            const bVal = (b as unknown as Record<string, unknown>)[sortValidated];
             if (aVal === undefined || aVal === null) return 1;
             if (bVal === undefined || bVal === null) return -1;
             return (bVal as number) - (aVal as number);
@@ -87,8 +85,8 @@ export async function GET(request: Request) {
             ];
         }
 
-        // sort is already validated against allowedSorts above.
-        const orderField = sort;
+        // sortValidated is already validated against allowedSorts above.
+        const orderField = sortValidated;
 
         const [models, total] = await Promise.all([
             prisma.model.findMany({
@@ -121,6 +119,11 @@ export async function POST(request: Request) {
 
         if (!name || !provider) {
             return NextResponse.json({ error: "name and provider are required" }, { status: 400 });
+        }
+
+        // Validate name length to prevent excessively long model names that may break UI rendering
+        if (typeof name !== "string" || name.trim().length === 0 || name.length > 200) {
+            return NextResponse.json({ error: "name must be a non-empty string between 1 and 200 characters" }, { status: 400 });
         }
 
         if (!DB_ENABLED) {
@@ -207,16 +210,19 @@ export async function POST(request: Request) {
             },
         });
 
-        // Create a feed event
-        await prisma.feedEvent.create({
-            data: {
-                userId: user.id,
-                eventType: "model_added",
-                entityType: "model",
-                entityId: model.id,
-                entityName: model.name,
-            },
-        });
+        // Only create a feed event when the model is verified and approved
+        // Pending/unverified submissions should not appear in the public activity feed
+        if (model.isVerified) {
+            await prisma.feedEvent.create({
+                data: {
+                    userId: user.id,
+                    eventType: "model_added",
+                    entityType: "model",
+                    entityId: model.id,
+                    entityName: model.name,
+                },
+            });
+        }
 
         return NextResponse.json(
             { message: "Model submitted for review.", data: model, status: "pending" },

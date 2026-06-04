@@ -52,7 +52,8 @@ export async function POST(request: Request) {
             );
         }
 
-        // Validate comment length to prevent oversized text from reaching the database.
+        // Validate and sanitize comment field to prevent spam submissions
+        let sanitizedComment = comment;
         if (comment !== undefined && comment !== null) {
             if (typeof comment !== "string") {
                 return NextResponse.json(
@@ -60,7 +61,16 @@ export async function POST(request: Request) {
                     { status: 400 }
                 );
             }
-            if (comment.length > 2000) {
+            // Trim whitespace from both ends
+            sanitizedComment = comment.trim();
+            // Prevent all-whitespace submissions
+            if (sanitizedComment.length === 0 && comment.length > 0) {
+                return NextResponse.json(
+                    { error: "comment cannot contain only whitespace." },
+                    { status: 400 }
+                );
+            }
+            if (sanitizedComment.length > 2000) {
                 return NextResponse.json(
                     { error: "comment must not exceed 2000 characters." },
                     { status: 400 }
@@ -72,6 +82,26 @@ export async function POST(request: Request) {
             return NextResponse.json(
                 { message: "Review received (DB not connected — configure DATABASE_URL to persist).", status: "pending" },
                 { status: 201 }
+            );
+        }
+
+        // Verify the entity (model or tool) exists before allowing a review submission
+        // This prevents polluting the database with reviews for non-existent entities
+        let entityExists = false;
+        if (entityType === "model") {
+            const model = await prisma.model.findUnique({ where: { id: entityId } });
+            entityExists = !!model;
+        } else if (entityType === "tool") {
+            // Assuming tools also have a database representation
+            // Adjust this based on your actual data model
+            const tool = await prisma.tool.findUnique({ where: { id: entityId } });
+            entityExists = !!tool;
+        }
+
+        if (!entityExists) {
+            return NextResponse.json(
+                { error: `${entityType} not found` },
+                { status: 404 }
             );
         }
 
@@ -99,14 +129,14 @@ export async function POST(request: Request) {
             },
             update: {
                 rating: Math.round(rating),
-                comment: comment ?? undefined,
+                comment: sanitizedComment || undefined,
             },
             create: {
                 userId: user.id,
                 entityType,
                 entityId,
                 rating: Math.round(rating),
-                comment: comment ?? undefined,
+                comment: sanitizedComment || undefined,
             },
         });
 
