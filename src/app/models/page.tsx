@@ -1,5 +1,6 @@
 "use client";
-
+import TrackModelView from '@/components/models/TrackModelView';
+import RecentlyViewed from '@/components/models/RecentlyViewed';
 import { useState, useMemo, useEffect } from "react";
 import { mockModels, getUniqueProviders, getUniqueModalities, getUniqueLicenses } from "@/lib/mock-data";
 import { ModelFilters as ModelFiltersType, Model } from "@/types";
@@ -61,6 +62,8 @@ export default function ModelsPage() {
     }, [filters, models]);
 
     return (
+        <TrackModelView model={{ slug: model.slug, name: model.name, avatar: model.logoUrl ?? '' }} />
+
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
@@ -148,5 +151,6 @@ export default function ModelsPage() {
                 </div>
             )}
         </div>
+        <RecentlyViewed />
     );
 }
