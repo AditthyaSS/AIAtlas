@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Model, ModelSortField } from "@/types";
 import { cn, formatPrice, formatContextWindow, formatBenchmark, getBenchmarkColor } from "@/lib/utils";
@@ -10,6 +11,8 @@ import { modalityIcons } from "@/lib/utils";
 interface ModelTableProps {
     models: Model[];
     showRank?: boolean;
+    selectedIndex?: number;
+    onSelectedIndexChange?: (index: number) => void;
 }
 
 type SortConfig = {
@@ -17,22 +20,17 @@ type SortConfig = {
     direction: "asc" | "desc";
 };
 
-export function ModelTable({ models, showRank = true }: ModelTableProps) {
+export function ModelTable({
+    models,
+    showRank = true,
+    selectedIndex = 0,
+    onSelectedIndexChange,
+}: ModelTableProps) {
+    const router = useRouter();
     const [sort, setSort] = useState<SortConfig>({
         field: "benchmarkGpqa",
         direction: "desc",
     });
-
-    const sortedModels = useMemo(() => {
-        return [...models].sort((a, b) => {
-            const aVal = a[sort.field];
-            const bVal = b[sort.field];
-            if (aVal === undefined || aVal === null) return 1;
-            if (bVal === undefined || bVal === null) return -1;
-            const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-            return sort.direction === "desc" ? -cmp : cmp;
-        });
-    }, [models, sort]);
 
     const handleSort = (field: ModelSortField) => {
         setSort((prev) =>
@@ -68,6 +66,21 @@ export function ModelTable({ models, showRank = true }: ModelTableProps) {
             </span>
         </th>
     );
+
+    const sortedModels = useMemo(() => {
+        return [...models].sort((a, b) => {
+            const aVal = a[sort.field];
+            const bVal = b[sort.field];
+            if (aVal === undefined || aVal === null) return 1;
+            if (bVal === undefined || bVal === null) return -1;
+            const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+            return sort.direction === "desc" ? -cmp : cmp;
+        });
+    }, [models, sort]);
+
+    const handleOpenModel = (model: Model) => {
+        router.push(`/models/${model.slug}`);
+    };
 
     return (
         <div className="w-full overflow-x-auto border border-atlas-border rounded-lg bg-atlas-bg-primary">
@@ -113,8 +126,11 @@ export function ModelTable({ models, showRank = true }: ModelTableProps) {
                             key={model.id}
                             className={cn(
                                 "border-b border-atlas-border/50 hover:bg-atlas-bg-tertiary transition-colors cursor-pointer group",
-                                idx % 2 === 0 ? "bg-atlas-bg-primary" : "bg-atlas-bg-secondary"
+                                idx % 2 === 0 ? "bg-atlas-bg-primary" : "bg-atlas-bg-secondary",
+                                idx === selectedIndex && "ring-2 ring-atlas-blue/70 bg-atlas-blue/5"
                             )}
+                            onMouseEnter={() => onSelectedIndexChange?.(idx)}
+                            onClick={() => handleOpenModel(model)}
                         >
                             {showRank && (
                                 <td className="px-3 py-3 font-mono text-sm font-semibold text-atlas-green">
@@ -124,6 +140,8 @@ export function ModelTable({ models, showRank = true }: ModelTableProps) {
                             <td className="px-3 py-3">
                                 <Link
                                     href={`/models/${model.slug}`}
+                                    tabIndex={-1}
+                                    onClick={(event) => event.preventDefault()}
                                     className="flex items-center gap-2 group-hover:text-atlas-green transition-colors"
                                 >
                                     <span className="font-sans font-medium text-atlas-text-primary">

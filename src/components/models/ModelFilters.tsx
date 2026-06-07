@@ -1,6 +1,7 @@
 "use client";
 
 import { ModelFilters as ModelFiltersType } from "@/types";
+import { type RefObject } from "react";
 
 interface ModelFiltersProps {
     filters: ModelFiltersType;
@@ -8,6 +9,7 @@ interface ModelFiltersProps {
     providers: string[];
     modalities: string[];
     licenses: string[];
+    searchInputRef?: RefObject<HTMLInputElement>;
 }
 
 export function ModelFilters({
@@ -16,6 +18,7 @@ export function ModelFilters({
     providers,
     modalities,
     licenses,
+    searchInputRef,
 }: ModelFiltersProps) {
     const updateFilter = (key: keyof ModelFiltersType, value: unknown) => {
         onFiltersChange({ ...filters, [key]: value });
@@ -41,8 +44,9 @@ export function ModelFilters({
                     <path d="m21 21-4.3-4.3" />
                 </svg>
                 <input
+                    ref={searchInputRef}
                     type="text"
-                    placeholder="Search models..."
+                    placeholder="Search models... /"
                     value={filters.search || ""}
                     onChange={(e) => updateFilter("search", e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-sm bg-atlas-bg-primary border border-atlas-border rounded-md text-atlas-text-primary placeholder:text-atlas-text-muted focus:outline-none focus:ring-1 focus:ring-atlas-green/50 focus:border-atlas-green/50 transition-colors"
