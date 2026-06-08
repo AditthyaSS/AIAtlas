@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { mockModels, getUniqueProviders, getUniqueModalities, getUniqueLicenses } from "@/lib/mock-data";
 import { ModelFilters as ModelFiltersType, Model } from "@/types";
@@ -8,12 +9,17 @@ import { ModelTable } from "@/components/models/ModelTable";
 import { ModelCard } from "@/components/models/ModelCard";
 import { ModelFilters } from "@/components/models/ModelFilters";
 import { ModelTableSkeleton, ModelCardSkeleton } from "@/components/ui/Skeletons";
+import { ShortcutHints } from "@/components/models/ShortcutHints";
 
 export default function ModelsPage() {
     const [filters, setFilters] = useState<ModelFiltersType>({});
     const [view, setView] = useState<"table" | "cards">("table");
     const [models, setModels] = useState<Model[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedRowIndex, setSelectedRowIndex] = useState(0);
+    const [showShortcutHints, setShowShortcutHints] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const controller = new AbortController();
@@ -60,6 +66,93 @@ export default function ModelsPage() {
 
         return result;
     }, [filters, models]);
+
+    const isInputFocused = useCallback(() => {
+        const active = document.activeElement;
+        if (!active) return false;
+
+        const tag = active.tagName.toLowerCase();
+        return (
+            tag === "input" ||
+            tag === "textarea" ||
+            active.getAttribute("contenteditable") === "true"
+        );
+    }, []);
+
+    useEffect(() => {
+        setSelectedRowIndex((prev) => Math.min(prev, Math.max(filteredModels.length - 1, 0)));
+    }, [filteredModels.length]);
+
+    const handleKeyDown = useCallback(
+        (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+                return;
+            }
+
+            if (event.key === "Escape") {
+                if (showShortcutHints) {
+                    event.preventDefault();
+                    setShowShortcutHints(false);
+                    return;
+                }
+
+                if (filters.search) {
+                    event.preventDefault();
+                    setFilters((prev) => ({ ...prev, search: "" }));
+                }
+
+                return;
+            }
+
+            if (isInputFocused()) {
+                return;
+            }
+
+            if (event.key === "/") {
+                event.preventDefault();
+                searchInputRef.current?.focus({ preventScroll: true });
+                return;
+            }
+
+            if (filteredModels.length === 0 && event.key === "?") {
+                event.preventDefault();
+                setShowShortcutHints((prev) => !prev);
+                return;
+            }
+
+            if (event.key.toLowerCase() === "j") {
+                event.preventDefault();
+                setSelectedRowIndex((prev) => Math.min(prev + 1, filteredModels.length - 1));
+                return;
+            }
+
+            if (event.key.toLowerCase() === "k") {
+                event.preventDefault();
+                setSelectedRowIndex((prev) => Math.max(prev - 1, 0));
+                return;
+            }
+
+            if (event.key === "Enter") {
+                event.preventDefault();
+                const selectedModel = filteredModels[selectedRowIndex];
+                if (selectedModel) {
+                    router.push(`/models/${selectedModel.slug}`);
+                }
+                return;
+            }
+
+            if (event.key === "?") {
+                event.preventDefault();
+                setShowShortcutHints((prev) => !prev);
+            }
+        },
+        [filteredModels, filters.search, isInputFocused, router, selectedRowIndex, showShortcutHints]
+    );
+
+    useEffect(() => {
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [handleKeyDown]);
 
     return (
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -124,6 +217,7 @@ export default function ModelsPage() {
                     providers={getUniqueProviders()}
                     modalities={getUniqueModalities()}
                     licenses={getUniqueLicenses()}
+                    searchInputRef={searchInputRef}
                 />
             </div>
 
@@ -143,7 +237,11 @@ export default function ModelsPage() {
                     </div>
                 )
             ) : view === "table" ? (
-                <ModelTable models={filteredModels} />
+                <ModelTable
+                    models={filteredModels}
+                    selectedIndex={selectedRowIndex}
+                    onSelectedIndexChange={setSelectedRowIndex}
+                />
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredModels.map((model, idx) => (
@@ -159,6 +257,12 @@ export default function ModelsPage() {
                     </p>
                 </div>
             )}
+
+            <ShortcutHints
+                isOpen={showShortcutHints}
+                onOpen={() => setShowShortcutHints(true)}
+                onClose={() => setShowShortcutHints(false)}
+            />
         </div>
     );
 }
