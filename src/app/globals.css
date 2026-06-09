@@ -115,3 +115,11 @@
     background-size: 64px 64px;
   }
 }
+
+/* Mobile Bottom Nav Spacer */
+@media (max-width: 768px) {
+    main {
+        /* Adds space at the bottom of the page equal to the navbar height (4rem) + device safe area */
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    }
+}

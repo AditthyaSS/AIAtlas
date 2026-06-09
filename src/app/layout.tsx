@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { Footer } from "@/components/layout/Footer";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
@@ -38,6 +39,7 @@ export default function RootLayout({
                         <Navbar />
                         <main className="flex-1">{children}</main>
                         <Footer />
+                        <BottomNav />
                         <BackToTop />
                     </SessionProvider>
                 </ThemeProvider>
