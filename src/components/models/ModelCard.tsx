@@ -3,6 +3,7 @@
 import { cn, formatPrice, formatContextWindow, formatBenchmark, getBenchmarkColor, highlightText, getPriceChangeIndicator  } from "@/lib/utils";
 import { Model } from "@/types";
 import Link from "next/link";
+import { ProviderLogo } from "@/components/models/ProviderLogo"; 
 import { BookmarkButton } from "@/components/ui/BookmarkButton";
 
 interface ModelCardProps {
@@ -18,28 +19,31 @@ export function ModelCard({ model, rank, searchQuery }: ModelCardProps) {
                 <BookmarkButton entityType="model" entityId={model.id} className="absolute top-2 right-2" />
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-start gap-2">
                         {rank !== undefined && (
-                            <span className="font-mono text-sm font-bold text-atlas-green">
+                            <span className="font-mono text-sm font-bold text-atlas-green mt-0.5">
                                 #{rank}
                             </span>
                         )}
                         <div>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-2">
+                                <ProviderLogo providerName={model.provider?.name || ""} size={18} />
+                                
                                 <h3 className="font-sans font-medium text-atlas-text-primary group-hover:text-atlas-green transition-colors">
   {highlightText(model.name, searchQuery || "")}
 </h3>
                                 {model.isVerified && (
-                                    <span className="text-atlas-green text-xs">✓</span>
+                                    <span className="text-atlas-green text-xs mt-0.5">✓</span>
                                 )}
                             </div>
-                            <p className="text-xs text-atlas-text-muted">
-                                        {highlightText(model.provider?.name || "", searchQuery || "")}
+                            <p className="text-xs text-atlas-text-muted mt-0.5 pl-6">
+                                {highlightText(model.provider?.name || "", searchQuery || "")}
+                            </p>
                             </p>
                         </div>
                     </div>
                     {model.isOpenSource && (
-                        <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-atlas-purple/10 text-atlas-purple border border-atlas-purple/20">
+                        <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-atlas-purple/10 text-atlas-purple border border-atlas-purple/20 shrink-0">
                             OSS
                         </span>
                     )}

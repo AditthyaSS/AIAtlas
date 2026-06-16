@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"; // ✅ needed for navigation
 import { Model, ModelSortField } from "@/types";
 import { cn, formatPrice, formatContextWindow, formatBenchmark, getBenchmarkColor,getPriceChangeIndicator } from "@/lib/utils";
 import { LiveBadge } from "./LiveBadge";
+import { ProviderLogo } from "@/components/models/ProviderLogo"; 
 import { modalityIcons } from "@/lib/utils";
 import { BookmarkButton } from "@/components/ui/BookmarkButton";
 
@@ -122,13 +123,22 @@ export function ModelTable({ models, showRank = true }: ModelTableProps) {
                                 </td>
                             )}
                             <td className="px-3 py-3">
-                                <div className="flex items-center gap-3">
+<div className="flex items-center gap-3">
                                     <Link
                                         href={`/models/${model.slug}`}
                                         className="flex items-center gap-2 group-hover:text-atlas-green transition-colors"
                                     >
+                                        <ProviderLogo providerName={model.provider?.name || ""} size={16} />
+                                        
                                         <span className="font-sans font-medium text-atlas-text-primary group-hover:text-atlas-green">
                                             {model.name}
+                                        </span>
+                                        {model.isVerified && (
+                                            <span className="text-atlas-green text-xs" title="Verified">✓</span>
+                                        )}
+                                        {model.isOpenSource && (
+                                            <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-atlas-purple/10 text-atlas-purple border border-atlas-purple/20">
+                                                OSS
                                         </span>
                                         {model.isVerified && (
                                             <span className="text-atlas-green text-xs" title="Verified">✓</span>
