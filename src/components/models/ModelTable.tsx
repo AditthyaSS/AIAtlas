@@ -185,9 +185,8 @@ export function ModelTable({ models, showRank = true }: ModelTableProps) {
                             <td className="px-3 py-3 text-sm text-atlas-text-secondary">
                                 <div className="flex gap-2">
                                     {model.modalities.map((modality: string) => (
-                                        <span key={modality} className="flex items-center gap-1">
+                                        <span key={modality} className="flex items-center text-lg cursor-help" title={modality}>
                                             {modalityIcons[modality] || "❓"}
-                                            <span className="hidden sm:inline">{modality}</span>
                                         </span>
                                     ))}
                                 </div>
